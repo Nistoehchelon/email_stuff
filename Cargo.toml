@@ -1,0 +1,25 @@
+[package]
+name = "email_sender"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+config = "0.15.27"
+dotenvy = "0.15.7"
+resend-rs = "0.35.2"
+serde = "1.0.229"
+tokio = { version = "1.54.1", features = ["full"] }
+
+
+# internal
+
+config_reader = { git = "https://github.com/Nistoehchelon/server_2_only.git" }
+server_config = { git = "https://github.com/Nistoehchelon/server_2_only.git" }
+server = { git = "https://github.com/Nistoehchelon/server_2_only.git" }
+http_stuff = { git = "https://github.com/Nistoehchelon/server_2_only.git" }
+encoding = { git = "https://github.com/Nistoehchelon/server_2_only.git" }
+url = { git = "https://github.com/Nistoehchelon/server_2_only.git" }
+error_structs = { git = "https://github.com/Nistoehchelon/server_2_only.git" }
+anyhow = "1.0.104"
+git-version = "0.3.9"
+tracing = "0.1.44"
