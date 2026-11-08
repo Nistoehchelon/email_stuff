@@ -1,12 +1,27 @@
 pub mod various_services;
 use secrecy::SecretString;
-use strum::IntoEnumIterator;
 
-#[derive(serde::Deserialize, Debug)]
+#[derive(serde::Deserialize, Debug, Clone)]
 pub struct EmailSenderConfig {
-    pub resend_api_key: SecretString,
-    pub aha_send_api_key: SecretString,
-    pub lettermint_apy_key: SecretString,
+    pub enabled_services: Vec<EnabledService>,
+ 
+}
+
+#[derive(serde::Deserialize, Debug, Clone)]
+pub struct ResendAPIKey(pub SecretString);
+#[derive(serde::Deserialize, Debug, Clone)]
+pub struct AhaSendAPIKey(pub SecretString);
+#[derive(serde::Deserialize, Debug, Clone)]
+pub struct AhaSendAccountId(pub SecretString);
+#[derive(serde::Deserialize, Debug, Clone)]
+pub enum EnabledService {
+    Resend {
+        api_key: ResendAPIKey
+    },
+    AhaSend {
+        api_key: AhaSendAPIKey,
+        account_id: AhaSendAccountId,
+    },
 }
 
 pub struct TypicalEmail {
@@ -30,22 +45,37 @@ pub enum ExternalEmailSendingService {
 
 pub async fn send_email(
     sender_config: EmailSenderConfig,
-    from_email_address: &str,
-    from_name: &str,
-    message_title: &str,
-    message_content: &str,
-    to_email_address: &str,
-    to_name: &str,
+    from_email_address: String,
+    from_name: String,
+    message_title: String,
+    message_content: String,
+    to_email_address: String,
+    to_name: String,
 ) -> anyhow::Result<EmailSendingSuccess, EmailSendingError> {
-    let Ok(service_i_wanna_use) = randomly_select_service() else {
+    let Ok(service_i_wanna_use) = randomly_select_service(sender_config.enabled_services.clone()) else {
         return Err(
             EmailSendingError::CouldNotSendTheEmailBecauseTheSenderServiceFailedForSomeReason,
         );
     };
     match service_i_wanna_use {
-        ExternalEmailSendingService::Resend => {
+        EnabledService::Resend { api_key } => {
           various_services::resend_send_email(
-                sender_config.resend_api_key.clone(),
+                api_key.0.clone(),
+                TypicalEmail {
+                    from_email_address: from_email_address.to_owned(),
+                    from_name: from_name.to_owned(),
+                    to_email_address: to_email_address.to_owned(),
+                    to_name: to_name.to_owned(),
+                    message_title: message_title.to_owned(),
+                    message_content: message_content.to_owned(),
+                },
+            )
+            .await
+        }
+        EnabledService::AhaSend { api_key, account_id }=> {
+              various_services::aha_send_send_email(
+                api_key.0.clone(),
+                account_id.0.clone(),
                 TypicalEmail {
                     from_email_address: from_email_address.to_owned(),
                     from_name: from_name.to_owned(),
@@ -63,14 +93,14 @@ pub async fn send_email(
     Ok(EmailSendingSuccess::EmailWasSentSuccessfully)
 }
 
-fn randomly_select_service() -> anyhow::Result<ExternalEmailSendingService, EmailSendingError> {
+fn randomly_select_service(selected_services: Vec<EnabledService>) -> anyhow::Result<EnabledService, EmailSendingError> {
     let mut rng = rand::rng();
-    match ExternalEmailSendingService::iter().choose(&mut rng) {
+    match selected_services.iter().choose(&mut rng) {
         None => {
             return Err(EmailSendingError::CouldNotRandomlyPickSendingService);
         }
         Some(c) => {
-            return Ok(c);
+            return Ok(c.clone());
         }
     };
 }
