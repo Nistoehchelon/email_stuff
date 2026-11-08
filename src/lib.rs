@@ -72,7 +72,7 @@ pub async fn send_email(
             .await
         }
         EnabledService::Lettermint { project_token } => {
-            various_services::lettermint_send_email(project_token, email_data).await;
+            let _resp = various_services::lettermint_send_email(project_token, email_data).await;
         }
     }
 
