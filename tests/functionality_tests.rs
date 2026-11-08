@@ -1,4 +1,4 @@
-use email_sender::{
+use email_stuff::{
     TypicalEmail,
     various_services::{self},
 };

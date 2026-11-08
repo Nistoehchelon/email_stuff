@@ -356,7 +356,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "email_sender"
+name = "email_stuff"
 version = "0.1.0"
 dependencies = [
  "anyhow",
