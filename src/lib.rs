@@ -4,7 +4,6 @@ use secrecy::SecretString;
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct EmailSenderConfig {
     pub enabled_services: Vec<EnabledService>,
- 
 }
 
 #[derive(serde::Deserialize, Debug, Clone)]
@@ -18,7 +17,7 @@ pub struct LetterMintProjectToken(pub SecretString);
 #[derive(serde::Deserialize, Debug, Clone)]
 pub enum EnabledService {
     Resend {
-        api_key: ResendAPIKey
+        api_key: ResendAPIKey,
     },
     AhaSend {
         api_key: AhaSendAPIKey,
@@ -26,7 +25,7 @@ pub enum EnabledService {
     },
     Lettermint {
         project_token: LetterMintProjectToken,
-    }
+    },
 }
 
 pub struct TypicalEmail {
@@ -37,7 +36,6 @@ pub struct TypicalEmail {
     pub message_title: String,
     pub message_content: String,
 }
-
 
 use rand::seq::IteratorRandom;
 
@@ -52,24 +50,24 @@ pub async fn send_email(
     sender_config: EmailSenderConfig,
     email_data: TypicalEmail,
 ) -> anyhow::Result<EmailSendingSuccess, EmailSendingError> {
-    let Ok(service_i_wanna_use) = randomly_select_service(sender_config.enabled_services.clone()) else {
+    let Ok(service_i_wanna_use) = randomly_select_service(sender_config.enabled_services.clone())
+    else {
         return Err(
             EmailSendingError::CouldNotSendTheEmailBecauseTheSenderServiceFailedForSomeReason,
         );
     };
     match service_i_wanna_use {
         EnabledService::Resend { api_key } => {
-          various_services::resend_send_email(
-                api_key.0.clone(),
-                email_data,
-            )
-            .await
+            various_services::resend_send_email(api_key.0.clone(), email_data).await
         }
-        EnabledService::AhaSend { api_key, account_id }=> {
-              various_services::aha_send_send_email(
+        EnabledService::AhaSend {
+            api_key,
+            account_id,
+        } => {
+            various_services::aha_send_send_email(
                 api_key.0.clone(),
                 account_id.0.clone(),
-                email_data
+                email_data,
             )
             .await
         }
@@ -81,7 +79,9 @@ pub async fn send_email(
     Ok(EmailSendingSuccess::EmailWasSentSuccessfully)
 }
 
-fn randomly_select_service(selected_services: Vec<EnabledService>) -> anyhow::Result<EnabledService, EmailSendingError> {
+fn randomly_select_service(
+    selected_services: Vec<EnabledService>,
+) -> anyhow::Result<EnabledService, EmailSendingError> {
     let mut rng = rand::rng();
     match selected_services.iter().choose(&mut rng) {
         None => {
