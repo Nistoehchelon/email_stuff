@@ -1,7 +1,5 @@
-use rand::{rngs::ThreadRng, seq::IndexedRandom};
 use std::net::IpAddr;
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 
 #[derive(serde::Deserialize, Debug)]
 pub struct EmailSenderConfig {
@@ -34,11 +32,11 @@ pub async fn send_email(
 }
 
 fn randomly_select_service()
--> anyhow::Result<ExternalEmailSendingService, RandomlySelectingServiceError> {
+-> anyhow::Result<ExternalEmailSendingService, EmailSendingError> {
     let mut rng = rand::rng();
     match ExternalEmailSendingService::iter().choose(&mut rng) {
         None => {
-            return Err(RandomlySelectingServiceError::CouldNotRandomlyPickSendingService);
+            return Err(EmailSendingError::CouldNotRandomlyPickSendingService);
         }
         Some(c) => {
             return Ok(c);
