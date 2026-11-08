@@ -14,6 +14,8 @@ pub struct AhaSendAPIKey(pub SecretString);
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct AhaSendAccountId(pub SecretString);
 #[derive(serde::Deserialize, Debug, Clone)]
+pub struct LetterMintProjectToken(pub SecretString);
+#[derive(serde::Deserialize, Debug, Clone)]
 pub enum EnabledService {
     Resend {
         api_key: ResendAPIKey
@@ -22,6 +24,9 @@ pub enum EnabledService {
         api_key: AhaSendAPIKey,
         account_id: AhaSendAccountId,
     },
+    Lettermint {
+        project_token: LetterMintProjectToken,
+    }
 }
 
 pub struct TypicalEmail {
@@ -45,12 +50,7 @@ pub enum ExternalEmailSendingService {
 
 pub async fn send_email(
     sender_config: EmailSenderConfig,
-    from_email_address: String,
-    from_name: String,
-    message_title: String,
-    message_content: String,
-    to_email_address: String,
-    to_name: String,
+    email_data: TypicalEmail,
 ) -> anyhow::Result<EmailSendingSuccess, EmailSendingError> {
     let Ok(service_i_wanna_use) = randomly_select_service(sender_config.enabled_services.clone()) else {
         return Err(
@@ -61,14 +61,7 @@ pub async fn send_email(
         EnabledService::Resend { api_key } => {
           various_services::resend_send_email(
                 api_key.0.clone(),
-                TypicalEmail {
-                    from_email_address: from_email_address.to_owned(),
-                    from_name: from_name.to_owned(),
-                    to_email_address: to_email_address.to_owned(),
-                    to_name: to_name.to_owned(),
-                    message_title: message_title.to_owned(),
-                    message_content: message_content.to_owned(),
-                },
+                email_data,
             )
             .await
         }
@@ -76,18 +69,13 @@ pub async fn send_email(
               various_services::aha_send_send_email(
                 api_key.0.clone(),
                 account_id.0.clone(),
-                TypicalEmail {
-                    from_email_address: from_email_address.to_owned(),
-                    from_name: from_name.to_owned(),
-                    to_email_address: to_email_address.to_owned(),
-                    to_name: to_name.to_owned(),
-                    message_title: message_title.to_owned(),
-                    message_content: message_content.to_owned(),
-                },
+                email_data
             )
             .await
         }
-        _ => {}
+        EnabledService::Lettermint { project_token } => {
+            various_services::lettermint_send_email(project_token, email_data).await;
+        }
     }
 
     Ok(EmailSendingSuccess::EmailWasSentSuccessfully)
