@@ -5,12 +5,12 @@ use secrecy::ExposeSecret;
 pub async fn lettermint_send_email(
     lettermint_project_token: LetterMintProjectToken,
     email_data: TypicalEmail,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<String> {
     let lm = Lettermint::builder()
         .sending_token(lettermint_project_token.0.expose_secret())
         .build()?;
-    let sender_name = email_data.from_email_address;
-    let sender_email = email_data.from_name;
+    let sender_name = email_data.from_name;
+    let sender_email = email_data.from_email_address;
     let receiver_email = email_data.to_email_address;
     let resp = lm
         .emails()
@@ -22,7 +22,8 @@ pub async fn lettermint_send_email(
         .text(email_data.message_content)
         .send(SendOptions::new())
         .await?;
-    tracing::debug!("{resp:?}");
 
-    Ok(())
+    println!("{resp:?}");
+
+    Ok(resp.status.to_string())
 }

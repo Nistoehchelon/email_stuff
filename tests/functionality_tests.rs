@@ -1,5 +1,5 @@
 use email_stuff::{
-    TypicalEmail,
+    LetterMintProjectToken, TypicalEmail,
     various_services::{self},
 };
 use secrecy::SecretString;
@@ -30,8 +30,6 @@ pub async fn test_resend_sending() {
     .await;
 }
 
-
-
 #[tokio::test]
 pub async fn test_aha_send_sending() {
     setup_tracing();
@@ -60,4 +58,30 @@ pub async fn test_aha_send_sending() {
         },
     )
     .await;
+}
+
+#[tokio::test]
+pub async fn test_lettermint_sending() {
+    dotenvy::dotenv().ok();
+    setup_tracing();
+
+    let api_key = LetterMintProjectToken(SecretString::from(
+        std::env::var("LETTERMINT_PROJECT_TOKEN").expect("Pass a LETTERMINT_PROJECT_TOKEN"),
+    ));
+    let from_email_address = std::env::var("FROM_EMAIL_TEST").expect("Pass a FROM_EMAIL_TEST");
+    let to_email_address = std::env::var("TO_EMAIL_TEST").expect("Pass a TO_EMAIL_TEST");
+
+    let res = various_services::lettermint_send_email(
+        api_key,
+        TypicalEmail {
+            from_email_address,
+            from_name: "Aha test admin".to_string(),
+            to_email_address,
+            to_name: "Aha receiver test".to_string(),
+            message_title: "hey testing ahasend".to_string(),
+            message_content: "hmhmhm".to_string(),
+        },
+    )
+    .await;
+    tracing::debug!("{res:?}");
 }
