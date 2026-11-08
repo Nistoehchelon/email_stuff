@@ -1,15 +1,8 @@
 use resend_rs::{Resend, types::CreateEmailBaseOptions};
 use secrecy::{ExposeSecret, SecretString};
 
+use crate::TypicalEmail;
 
-pub struct TypicalEmail {
-    pub from_email_address: String,
-    pub from_name: String,
-    pub to_email_address: String,
-    pub to_name: String,
-    pub message_title: String,
-    pub message_content: String,
-}
 
 pub async fn resend_send_email(
     resend_api_key: SecretString,

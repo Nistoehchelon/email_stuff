@@ -1,4 +1,4 @@
-use email_sender::various_services::{self, TypicalEmail};
+use email_sender::{TypicalEmail, various_services::{self}};
 
 #[tokio::test]
 pub async fn test_resend_sending() {

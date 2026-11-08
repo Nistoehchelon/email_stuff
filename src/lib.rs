@@ -8,9 +8,18 @@ pub struct EmailSenderConfig {
     pub aha_send_api_key: SecretString,
     pub lettermint_apy_key: SecretString,
 }
-use rand::seq::IteratorRandom;
 
-use crate::various_services::TypicalEmail; // rand 0.9
+pub struct TypicalEmail {
+    pub from_email_address: String,
+    pub from_name: String,
+    pub to_email_address: String,
+    pub to_name: String,
+    pub message_title: String,
+    pub message_content: String,
+}
+
+
+use rand::seq::IteratorRandom;
 
 #[derive(serde::Deserialize, Clone, Copy, Debug, strum_macros::EnumIter)]
 pub enum ExternalEmailSendingService {
