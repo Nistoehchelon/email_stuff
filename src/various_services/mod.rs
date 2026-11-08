@@ -1,15 +1,12 @@
+pub mod aha_send;
+pub use aha_send::aha_send_send_email;
 use resend_rs::{Resend, types::CreateEmailBaseOptions};
 use secrecy::{ExposeSecret, SecretString};
-
 use crate::TypicalEmail;
 
-
-pub async fn resend_send_email(
-    resend_api_key: SecretString,
-    email_data: TypicalEmail,
-) {
+pub async fn resend_send_email(api_key: SecretString, email_data: TypicalEmail) {
     let resend = {
-        let raw_key: &str = resend_api_key.expose_secret();
+        let raw_key: &str = api_key.expose_secret();
         Resend::new(raw_key)
     };
     let TypicalEmail {
@@ -27,4 +24,9 @@ pub async fn resend_send_email(
     let email = CreateEmailBaseOptions::new(from, to, message_title).with_html(&message_content);
     let email_response = resend.emails.send(email).await;
     tracing::debug!("CreateEmailResponse: {email_response:?}");
+}
+
+
+fn get_reqwest_client() -> reqwest::Client {
+    reqwest::Client::new()
 }
