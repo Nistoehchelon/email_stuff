@@ -3,11 +3,10 @@ use email_stuff::{
     various_services::{self},
 };
 use secrecy::SecretString;
-use tracing_test::traced_test;
 fn setup_tracing() {
-    // let _ = tracing_subscriber::fmt()
-    // .with_env_filter("debug")
-    // .try_init();
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
 }
 
 #[tokio::test]
@@ -34,11 +33,11 @@ pub async fn test_resend_sending() {
 
 
 #[tokio::test]
-#[traced_test]
 pub async fn test_aha_send_sending() {
+    setup_tracing();
     println!("gg");
     tracing::debug!("hhh");
-    setup_tracing();
+
     dotenvy::dotenv().ok();
     let api_key =
         SecretString::from(std::env::var("AHA_SEND_API_KEY").expect("Pass a AHA_SEND_API_KEY"));
