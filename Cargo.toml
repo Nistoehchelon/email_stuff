@@ -28,3 +28,5 @@ strum = { version = "0.28.0", features = ["derive"] }
 strum_macros = "0.28.0"
 secrecy = { version = "0.10.3", features = ["serde"] }
 reqwest = "0.13.5"
+tracing-test = "0.2.6"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }

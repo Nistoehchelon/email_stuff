@@ -62,6 +62,7 @@ pub async fn aha_send_send_email(
     account_id: SecretString,
     email_data: TypicalEmail,
 ) {
+    tracing::debug!("inside aha_send_send_email");
     let aha_send = { AhaSend::new(api_key, account_id) };
     let TypicalEmail {
         from_email_address,
