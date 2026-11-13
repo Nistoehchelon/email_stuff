@@ -28,6 +28,7 @@ pub enum EnabledService {
     },
 }
 
+#[derive(Debug, Clone)]
 pub struct TypicalEmail {
     pub from_email_address: String,
     pub from_name: String,
@@ -92,10 +93,12 @@ fn randomly_select_service(
         }
     };
 }
+#[derive(Debug, Clone)]
 pub enum EmailSendingError {
     CouldNotSendTheEmailBecauseTheSenderServiceFailedForSomeReason,
     CouldNotRandomlyPickSendingService,
 }
+#[derive(Debug, Clone)]
 pub enum EmailSendingSuccess {
     EmailWasSentSuccessfully,
 }
