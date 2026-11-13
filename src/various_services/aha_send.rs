@@ -1,7 +1,7 @@
-use secrecy::{ExposeSecret, SecretString};
+use secrecy::ExposeSecret;
 
 use crate::{
-    TypicalEmail,
+    AhaSendAPIKey, AhaSendAccountId, AhasendServiceData, TypicalEmail,
     various_services::{aha_send, get_reqwest_client},
 };
 
@@ -21,11 +21,11 @@ pub struct EmailPayloadShape {
     html_content: String,
 }
 pub struct AhaSend {
-    api_key: SecretString,
-    account_id: SecretString,
+    api_key: AhaSendAPIKey,
+    account_id: AhaSendAccountId,
 }
 impl AhaSend {
-    pub fn new(api_key: SecretString, account_id: SecretString) -> Self {
+    pub fn new(api_key: AhaSendAPIKey, account_id: AhaSendAccountId) -> Self {
         Self {
             api_key,
             account_id,
@@ -38,9 +38,9 @@ impl AhaSend {
             let resp = match reqwest_client
                 .post(format!(
                     "https://api.ahasend.com/v2/accounts/{}/messages",
-                    &self.account_id.expose_secret()
+                    &self.account_id.0.expose_secret()
                 ))
-                .bearer_auth(&self.api_key.expose_secret())
+                .bearer_auth(&self.api_key.0.expose_secret())
                 .json(&payload)
                 .send()
                 .await
@@ -57,15 +57,17 @@ impl AhaSend {
     }
 }
 
-pub async fn aha_send_send_email(
-    api_key: SecretString,
-    account_id: SecretString,
-    email_data: TypicalEmail,
-) {
+pub async fn ahasend_send_email(data: AhasendServiceData, email_data: TypicalEmail) {
     tracing::debug!("inside aha_send_send_email");
+    let AhasendServiceData {
+        sender_qualified_domain_name,
+        api_key,
+        account_id,
+    } = data;
     let aha_send = { AhaSend::new(api_key, account_id) };
+
     let TypicalEmail {
-        from_email_address,
+        from_email_username_part,
         from_name,
         to_email_address,
         to_name,
@@ -76,7 +78,7 @@ pub async fn aha_send_send_email(
         .send_email(EmailPayloadShape {
             sandbox: false,
             from: aha_send::Entity {
-                email: from_email_address,
+                email: format!("{from_email_username_part}@{sender_qualified_domain_name}"),
                 name: from_name,
             },
             recipients: vec![Entity {

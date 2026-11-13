@@ -31,3 +31,4 @@ reqwest = "0.13.5"
 tracing-test = "0.2.6"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 lettermint = "2.3.0"
+derive_more = { version = "2.1.1", features = ["debug", "deref", "display", "from"] }

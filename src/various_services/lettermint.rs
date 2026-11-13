@@ -1,25 +1,38 @@
-use crate::{LetterMintProjectToken, TypicalEmail};
+use crate::{LettermintServiceData, TypicalEmail};
 use lettermint::{Lettermint, SendOptions};
 use secrecy::ExposeSecret;
 
 pub async fn lettermint_send_email(
-    lettermint_project_token: LetterMintProjectToken,
+    data: LettermintServiceData,
     email_data: TypicalEmail,
 ) -> anyhow::Result<String> {
+    let LettermintServiceData {
+        sender_qualified_domain_name,
+        project_token,
+    } = data;
+    let TypicalEmail {
+        from_email_username_part,
+        from_name,
+        to_email_address,
+        to_name: _,
+        message_title,
+        message_content,
+    } = email_data;
     let lm = Lettermint::builder()
-        .sending_token(lettermint_project_token.0.expose_secret())
+        .sending_token(project_token.0.expose_secret())
         .build()?;
-    let sender_name = email_data.from_name;
-    let sender_email = email_data.from_email_address;
-    let receiver_email = email_data.to_email_address;
+    let sender_name = from_name;
+    let receiver_email = to_email_address;
     let resp = lm
         .emails()
         .compose()
-        .from(format!("{sender_name} <{sender_email}>"))
+        .from(format!(
+            "{sender_name} <{from_email_username_part}@{sender_qualified_domain_name}>"
+        ))
         .to(receiver_email)
-        .subject(email_data.message_title)
-        .html(email_data.message_content.clone())
-        .text(email_data.message_content)
+        .subject(message_title)
+        .html(message_content.clone())
+        .text(message_content)
         .send(SendOptions::new())
         .await?;
 

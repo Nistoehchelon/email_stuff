@@ -1,5 +1,5 @@
 pub mod aha_send;
-pub use aha_send::aha_send_send_email;
+pub use aha_send::ahasend_send_email;
 pub mod resend;
 pub use resend::resend_send_email;
 pub mod lettermint;

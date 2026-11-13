@@ -6,31 +6,48 @@ pub struct EmailSenderConfig {
     pub enabled_services: Vec<EnabledService>,
 }
 
-#[derive(serde::Deserialize, Debug, Clone)]
+#[derive(serde::Deserialize, derive_more::Debug, derive_more::Deref, derive_more::From, Clone)]
+#[from(forward)]
 pub struct ResendAPIKey(pub SecretString);
-#[derive(serde::Deserialize, Debug, Clone)]
+#[derive(serde::Deserialize, derive_more::Debug, derive_more::Deref, derive_more::From, Clone)]
+#[from(forward)]
 pub struct AhaSendAPIKey(pub SecretString);
-#[derive(serde::Deserialize, Debug, Clone)]
+#[derive(serde::Deserialize, derive_more::Debug, derive_more::Deref, derive_more::From, Clone)]
+#[from(forward)]
 pub struct AhaSendAccountId(pub SecretString);
-#[derive(serde::Deserialize, Debug, Clone)]
+#[derive(serde::Deserialize, derive_more::Debug, derive_more::Deref, derive_more::From, Clone)]
+#[from(forward)]
 pub struct LetterMintProjectToken(pub SecretString);
+
 #[derive(serde::Deserialize, Debug, Clone)]
-pub enum EnabledService {
-    Resend {
-        api_key: ResendAPIKey,
-    },
-    AhaSend {
-        api_key: AhaSendAPIKey,
-        account_id: AhaSendAccountId,
-    },
-    Lettermint {
-        project_token: LetterMintProjectToken,
-    },
+pub struct ResendServiceData {
+    pub sender_qualified_domain_name: SenderQualifiedDomain,
+    pub api_key: ResendAPIKey,
+}
+#[derive(serde::Deserialize, Debug, Clone)]
+pub struct AhasendServiceData {
+pub sender_qualified_domain_name: SenderQualifiedDomain,
+pub api_key: AhaSendAPIKey,
+pub account_id: AhaSendAccountId,
+}
+#[derive(serde::Deserialize, Debug, Clone)]
+pub struct LettermintServiceData {
+pub sender_qualified_domain_name: SenderQualifiedDomain,
+pub project_token: LetterMintProjectToken,
 }
 
+#[derive(serde::Deserialize, Debug, Clone)]
+pub enum EnabledService {
+    Resend(ResendServiceData),
+    AhaSend(AhasendServiceData),
+    Lettermint(LettermintServiceData),
+}
+#[derive(serde::Deserialize, Debug, Clone, derive_more::Display)]
+pub struct SenderQualifiedDomain(pub String); // example: supersend.mysite.com
+
 #[derive(Debug, Clone)]
-pub struct TypicalEmail {
-    pub from_email_address: String,
+pub struct TypicalEmail { 
+    pub from_email_username_part: String,
     pub from_name: String,
     pub to_email_address: String,
     pub to_name: String,
@@ -39,13 +56,6 @@ pub struct TypicalEmail {
 }
 
 use rand::seq::IteratorRandom;
-
-#[derive(serde::Deserialize, Clone, Copy, Debug, strum_macros::EnumIter)]
-pub enum ExternalEmailSendingService {
-    Resend,
-    AhaSend,
-    Lettermint,
-}
 
 pub async fn send_email(
     sender_config: EmailSenderConfig,
@@ -58,22 +68,15 @@ pub async fn send_email(
         );
     };
     match service_i_wanna_use {
-        EnabledService::Resend { api_key } => {
-            various_services::resend_send_email(api_key.0.clone(), email_data).await
-        }
-        EnabledService::AhaSend {
-            api_key,
-            account_id,
-        } => {
-            various_services::aha_send_send_email(
-                api_key.0.clone(),
-                account_id.0.clone(),
+EnabledService::Resend(data) => various_services::resend_send_email(data, email_data).await,
+        EnabledService::AhaSend(data) => {
+            various_services::ahasend_send_email(data,
                 email_data,
             )
             .await
         }
-        EnabledService::Lettermint { project_token } => {
-            let _resp = various_services::lettermint_send_email(project_token, email_data).await;
+        EnabledService::Lettermint(data) => {
+            let _resp = various_services::lettermint_send_email(data, email_data).await;
         }
     }
 
