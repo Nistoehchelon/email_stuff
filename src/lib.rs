@@ -57,7 +57,7 @@ pub struct TypicalEmail {
 
 use rand::seq::IteratorRandom;
 
-#[tracing::instrument]
+#[tracing::instrument(skip(email_data))]
 pub async fn send_email(
     sender_config: EmailSenderConfig,
     email_data: TypicalEmail,
@@ -66,6 +66,7 @@ pub async fn send_email(
     else {
         return Err(anyhow::anyhow!("Could not select seervice"));
     };
+    tracing::debug!("email_data: {email_data:#?}");
     tracing::debug!("Choosen service: {service_i_wanna_use:#?}");
     match service_i_wanna_use {
         EnabledService::Resend(data) => {
