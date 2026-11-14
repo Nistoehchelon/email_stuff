@@ -5,13 +5,13 @@ use crate::{
     various_services::{aha_send, get_reqwest_client},
 };
 
-#[derive(serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 struct Entity {
     email: String,
     name: String,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct EmailPayloadShape {
     sandbox: bool,
     from: Entity,
@@ -20,6 +20,7 @@ pub struct EmailPayloadShape {
     text_content: String,
     html_content: String,
 }
+#[derive(Debug)]
 pub struct AhaSend {
     api_key: AhaSendAPIKey,
     account_id: AhaSendAccountId,
@@ -32,32 +33,31 @@ impl AhaSend {
         }
     }
     // https://ahasend.com/docs/send-api/send-email
-    pub async fn send_email(&self, payload: EmailPayloadShape) {
+    #[tracing::instrument]
+    pub async fn send_email(&self, payload: EmailPayloadShape) -> anyhow::Result<()> {
         let reqwest_client = get_reqwest_client();
-        let response = {
-            let resp = match reqwest_client
-                .post(format!(
-                    "https://api.ahasend.com/v2/accounts/{}/messages",
-                    &self.account_id.0.expose_secret()
-                ))
-                .bearer_auth(&self.api_key.0.expose_secret())
-                .json(&payload)
-                .send()
-                .await
-            {
-                Ok(resp) => resp,
-                Err(error) => {
-                    tracing::debug!("Resp error {error:?}");
-                    return;
-                }
-            };
-            resp
-        };
+        let response = reqwest_client
+            .post(format!(
+                "https://api.ahasend.com/v2/accounts/{}/messages",
+                &self.account_id.0.expose_secret()
+            ))
+            .bearer_auth(&self.api_key.0.expose_secret())
+            .json(&payload)
+            .send()
+            .await
+            .map_err(|e| {
+                tracing::error!("Resp error {e:#?}");
+                anyhow::anyhow!("{e:#?}")
+            })?;
         tracing::debug!("Resp: {:?}", response.text().await.unwrap_or_default());
+        Ok(())
     }
 }
 
-pub async fn ahasend_send_email(data: AhasendServiceData, email_data: TypicalEmail) {
+pub async fn ahasend_send_email(
+    data: AhasendServiceData,
+    email_data: TypicalEmail,
+) -> anyhow::Result<()> {
     tracing::debug!("inside aha_send_send_email");
     let AhasendServiceData {
         sender_qualified_domain_name,

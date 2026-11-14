@@ -2,10 +2,11 @@ use crate::{LettermintServiceData, TypicalEmail};
 use lettermint::{Lettermint, SendOptions};
 use secrecy::ExposeSecret;
 
+#[tracing::instrument]
 pub async fn lettermint_send_email(
     data: LettermintServiceData,
     email_data: TypicalEmail,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<()> {
     let LettermintServiceData {
         sender_qualified_domain_name,
         project_token,
@@ -36,7 +37,6 @@ pub async fn lettermint_send_email(
         .send(SendOptions::new())
         .await?;
 
-    println!("{resp:?}");
-
-    Ok(resp.status.to_string())
+    tracing::debug!("{resp:?}");
+    Ok(())
 }

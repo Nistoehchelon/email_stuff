@@ -26,14 +26,14 @@ pub struct ResendServiceData {
 }
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct AhasendServiceData {
-pub sender_qualified_domain_name: SenderQualifiedDomain,
-pub api_key: AhaSendAPIKey,
-pub account_id: AhaSendAccountId,
+    pub sender_qualified_domain_name: SenderQualifiedDomain,
+    pub api_key: AhaSendAPIKey,
+    pub account_id: AhaSendAccountId,
 }
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct LettermintServiceData {
-pub sender_qualified_domain_name: SenderQualifiedDomain,
-pub project_token: LetterMintProjectToken,
+    pub sender_qualified_domain_name: SenderQualifiedDomain,
+    pub project_token: LetterMintProjectToken,
 }
 
 #[derive(serde::Deserialize, Debug, Clone)]
@@ -46,7 +46,7 @@ pub enum EnabledService {
 pub struct SenderQualifiedDomain(pub String); // example: supersend.mysite.com
 
 #[derive(Debug, Clone)]
-pub struct TypicalEmail { 
+pub struct TypicalEmail {
     pub from_email_username_part: String,
     pub from_name: String,
     pub to_email_address: String,
@@ -57,23 +57,22 @@ pub struct TypicalEmail {
 
 use rand::seq::IteratorRandom;
 
+#[tracing::instrument]
 pub async fn send_email(
     sender_config: EmailSenderConfig,
     email_data: TypicalEmail,
-) -> anyhow::Result<EmailSendingSuccess, EmailSendingError> {
+) -> anyhow::Result<EmailSendingSuccess> {
     let Ok(service_i_wanna_use) = randomly_select_service(sender_config.enabled_services.clone())
     else {
-        return Err(
-            EmailSendingError::CouldNotSendTheEmailBecauseTheSenderServiceFailedForSomeReason,
-        );
+        return Err(anyhow::anyhow!("Could not select seervice"));
     };
+    tracing::debug!("Choosen service: {service_i_wanna_use:#?}");
     match service_i_wanna_use {
-EnabledService::Resend(data) => various_services::resend_send_email(data, email_data).await,
+        EnabledService::Resend(data) => {
+            various_services::resend_send_email(data, email_data).await?
+        }
         EnabledService::AhaSend(data) => {
-            various_services::ahasend_send_email(data,
-                email_data,
-            )
-            .await
+            various_services::ahasend_send_email(data, email_data).await?
         }
         EnabledService::Lettermint(data) => {
             let _resp = various_services::lettermint_send_email(data, email_data).await;
