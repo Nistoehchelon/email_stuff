@@ -1,4 +1,4 @@
-use crate::{ResendServiceData, TypicalEmail};
+use crate::{ResendServiceData, TypicalEmail, various_services::html_to_text_content};
 use resend_rs::{Resend, types::CreateEmailBaseOptions};
 use secrecy::ExposeSecret;
 
@@ -29,9 +29,14 @@ pub async fn resend_send_email(
     let recipient_addr = to_email_address.to_string();
     let recipient_addr_str = recipient_addr.as_str();
     let to = [recipient_addr_str];
-    let email = CreateEmailBaseOptions::new(from, to, message_title).with_html(&message_content);
-    let email_response = resend.emails.send(email).await.map_err(|e|anyhow::anyhow!("{e:#?}"));
+    let email = CreateEmailBaseOptions::new(from, to, message_title)
+        .with_html(&message_content)
+        .with_text(&html_to_text_content(&message_content)?);
+    let email_response = resend
+        .emails
+        .send(email)
+        .await
+        .map_err(|e| anyhow::anyhow!("{e:#?}"));
     tracing::debug!("{email_response:#?}");
     Ok(())
-
 }

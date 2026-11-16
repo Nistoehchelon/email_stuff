@@ -1,4 +1,4 @@
-use crate::{LettermintServiceData, TypicalEmail};
+use crate::{LettermintServiceData, TypicalEmail, various_services::html_to_text_content};
 use lettermint::{Lettermint, SendOptions};
 use secrecy::ExposeSecret;
 
@@ -33,7 +33,7 @@ pub async fn lettermint_send_email(
         .to(receiver_email)
         .subject(message_title)
         .html(message_content.clone())
-        .text(message_content)
+        .text(html_to_text_content(&message_content)?)
         .send(SendOptions::new())
         .await?;
 

@@ -1,8 +1,7 @@
 use secrecy::ExposeSecret;
 
 use crate::{
-    AhaSendAPIKey, AhaSendAccountId, AhasendServiceData, TypicalEmail,
-    various_services::{aha_send, get_reqwest_client},
+    AhaSendAPIKey, AhaSendAccountId, AhasendServiceData, TypicalEmail, various_services::{aha_send, get_reqwest_client, html_to_text_content},
 };
 
 #[derive(Debug, serde::Serialize)]
@@ -86,7 +85,7 @@ pub async fn ahasend_send_email(
             name: to_name,
         }],
         subject: message_title,
-        text_content: message_content.clone(),
+        text_content: html_to_text_content(&message_content)?,
         html_content: message_content,
     };
     let json = serde_json::to_string(&aha_payload)?;
