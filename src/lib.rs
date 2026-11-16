@@ -1,7 +1,15 @@
 pub mod various_services;
-use std::fmt::format;
+pub mod typestate_enabled_services;
 
 use secrecy::SecretString;
+use std::marker::PhantomData;
+use typestate_enabled_services::{Different, NonEmpty, NotContains};
+
+define_email_builder! {
+    Resend    => ResendMarker    => ResendServiceData    => resend,
+    AhaSend   => AhaSendMarker   => AhasendServiceData   => ahasend,
+    Lettermint => LettermintMarker => LettermintServiceData => lettermint,
+}
 
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct EmailSenderConfig {
