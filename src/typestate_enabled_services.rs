@@ -1,3 +1,15 @@
+#[derive(Debug)]
+pub enum BuildError {
+    NoServicesEnabled,
+}
+impl core::fmt::Display for BuildError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::NoServicesEnabled => f.write_str("no email services enabled at runtime"),
+        }
+    }
+}
+impl std::error::Error for BuildError {}
 
 
 pub trait Different<Other> {}
@@ -18,55 +30,65 @@ impl<H, T> NonEmpty for (H, T) {}
 macro_rules! define_email_builder {
     (
         $(
-            $variant:ident => $marker:ident => $data:ty => $method:ident
+            $variant:ident => $marker:ident => $data:ty => $method:ident => $method_opt:ident
         ),* $(,)?
     ) => {
         $( #[derive(Debug)] pub struct $marker; )*
-
-        define_email_builder!(@different [$($marker),*]);
+        $crate::define_email_builder!(@different [$($marker),*]);
 
         pub struct EmailSenderConfigBuilder<State = ()> {
-            enabled_services: Vec<EnabledService>,
-            _state: PhantomData<State>,
+            enabled_services: Vec<$crate::EnabledService>,
+            _state: ::core::marker::PhantomData<State>,
         }
 
         impl EmailSenderConfigBuilder<()> {
             pub fn new() -> Self {
-                Self { enabled_services: Vec::new(), _state: PhantomData }
+                Self { enabled_services: Vec::new(), _state: ::core::marker::PhantomData }
             }
         }
-        impl Default for EmailSenderConfigBuilder<()> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+        impl ::core::default::Default for EmailSenderConfigBuilder<()> {
+            fn default() -> Self { Self::new() }
+        }
 
         impl<State> EmailSenderConfigBuilder<State> {
             $(
+                // Unconditional — same as before.
                 pub fn $method(self, data: $data)
-                    -> EmailSenderConfigBuilder<($marker, State)>
-                where
-                    State: $crate::NotContains<$marker>,
+                    -> $crate::EmailSenderConfigBuilder<($marker, State)>
+                where State: $crate::NotContains<$marker>
                 {
                     let mut svcs = self.enabled_services;
-                    svcs.push(EnabledService::$variant(data));
-                    EmailSenderConfigBuilder { enabled_services: svcs, _state: PhantomData }
+                    svcs.push($crate::EnabledService::$variant(data));
+                    $crate::EmailSenderConfigBuilder { enabled_services: svcs, _state: ::core::marker::PhantomData }
+                }
+
+                // Conditional — marker still advances, data pushed only if Some.
+                pub fn $method_opt(self, data: Option<$data>)
+                    -> $crate::EmailSenderConfigBuilder<($marker, State)>
+                where State: $crate::NotContains<$marker>
+                {
+                    let mut svcs = self.enabled_services;
+                    if let Some(data) = data {
+                        svcs.push($crate::EnabledService::$variant(data));
+                    }
+                    $crate::EmailSenderConfigBuilder { enabled_services: svcs, _state: ::core::marker::PhantomData }
                 }
             )*
 
-            pub fn build(self) -> EmailSenderConfig
-            where
-                State: $crate::NonEmpty,
+            pub fn build(self) -> Result<$crate::EmailSenderConfig, $crate::BuildError>
+            where State: $crate::NonEmpty,
             {
-                EmailSenderConfig { enabled_services: self.enabled_services }
+                if self.enabled_services.is_empty() {
+                    return Err($crate::BuildError::NoServicesEnabled);
+                }
+                Ok($crate::EmailSenderConfig { enabled_services: self.enabled_services })
             }
         }
     };
 
-
     (@different [$head:ident $(, $rest:ident)*]) => {
-        $( define_email_builder!(@pair $head, $rest); )*
-        define_email_builder!(@different [$($rest),*]);
+        $( $crate::define_email_builder!(@pair $head, $rest); )*
+        $crate::define_email_builder!(@different [$($rest),*]);
     };
     (@different []) => {};
     (@pair $a:ident, $b:ident) => {

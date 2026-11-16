@@ -1,14 +1,12 @@
-pub mod various_services;
 pub mod typestate_enabled_services;
-
+pub mod various_services;
 use secrecy::SecretString;
-use std::marker::PhantomData;
-use typestate_enabled_services::{Different, NonEmpty, NotContains};
+use typestate_enabled_services::{BuildError, Different, NonEmpty, NotContains};
 
 define_email_builder! {
-    Resend    => ResendMarker    => ResendServiceData    => resend,
-    AhaSend   => AhaSendMarker   => AhasendServiceData   => ahasend,
-    Lettermint => LettermintMarker => LettermintServiceData => lettermint,
+    Resend     => ResendMarker     => ResendServiceData     => resend     => resend_opt,
+    AhaSend    => AhaSendMarker    => AhasendServiceData    => ahasend    => ahasend_opt,
+    Lettermint => LettermintMarker => LettermintServiceData => lettermint => lettermint_opt,
 }
 
 #[derive(serde::Deserialize, Debug, Clone)]
