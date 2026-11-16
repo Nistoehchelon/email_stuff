@@ -32,7 +32,7 @@ impl AhaSend {
         }
     }
     // https://ahasend.com/docs/send-api/send-email
-    #[tracing::instrument(skip(payload))]
+    #[tracing::instrument(skip(payload, self))]
     pub async fn send_email(&self, payload: EmailPayloadShape) -> anyhow::Result<()> {
         let reqwest_client = get_reqwest_client();
         let response = reqwest_client
