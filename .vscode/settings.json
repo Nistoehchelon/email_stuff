@@ -1,0 +1,4 @@
+{
+    "editor.wordWrap": "on",
+    "rust-analyzer.check.command": "clippy"
+}

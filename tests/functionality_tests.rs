@@ -19,7 +19,7 @@ pub async fn test_resend_sending() {
     let sender_fqdn = std::env::var("SENDER_QUALIFIED_DOMAIN_NAME")
         .expect("Pass a FROM_EMAIL_USERNAME_PART_TEST");
     let to_email_address = std::env::var("TO_EMAIL_TEST").expect("Pass a TO_EMAIL_TEST");
-    various_services::resend_send_email(
+    let _unused = various_services::resend_send_email(
         ResendServiceData {
             sender_qualified_domain_name: email_stuff::SenderQualifiedDomain(sender_fqdn),
             api_key: ResendAPIKey::from(api_key),
@@ -53,7 +53,7 @@ pub async fn test_aha_send_sending() {
         std::env::var("SENDER_EMAIL_USERNAME").expect("Pass a FROM_EMAIL_USERNAME");
     let to_email_address = std::env::var("TO_EMAIL_TEST").expect("Pass a TO_EMAIL_TEST");
 
-    various_services::ahasend_send_email(
+    let _result = various_services::ahasend_send_email(
         AhasendServiceData {
             sender_qualified_domain_name: email_stuff::SenderQualifiedDomain(sender_email_fqdn),
             api_key: email_stuff::AhaSendAPIKey::from(api_key),

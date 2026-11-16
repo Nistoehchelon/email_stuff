@@ -33,15 +33,15 @@ impl AhaSend {
         }
     }
     // https://ahasend.com/docs/send-api/send-email
-    #[tracing::instrument]
+    #[tracing::instrument(skip(payload))]
     pub async fn send_email(&self, payload: EmailPayloadShape) -> anyhow::Result<()> {
         let reqwest_client = get_reqwest_client();
         let response = reqwest_client
             .post(format!(
                 "https://api.ahasend.com/v2/accounts/{}/messages",
-                &self.account_id.0.expose_secret()
+                self.account_id.0.expose_secret()
             ))
-            .bearer_auth(&self.api_key.0.expose_secret())
+            .bearer_auth(self.api_key.0.expose_secret())
             .json(&payload)
             .send()
             .await
@@ -54,6 +54,7 @@ impl AhaSend {
     }
 }
 
+#[tracing::instrument(skip(data, email_data))]
 pub async fn ahasend_send_email(
     data: AhasendServiceData,
     email_data: TypicalEmail,
@@ -74,20 +75,21 @@ pub async fn ahasend_send_email(
         message_title,
         message_content,
     } = email_data;
-    aha_send
-        .send_email(EmailPayloadShape {
-            sandbox: false,
-            from: aha_send::Entity {
-                email: format!("{from_email_username_part}@{sender_qualified_domain_name}"),
-                name: from_name,
-            },
-            recipients: vec![Entity {
-                email: to_email_address,
-                name: to_name,
-            }],
-            subject: message_title,
-            text_content: message_content.clone(),
-            html_content: message_content,
-        })
-        .await
+    let aha_payload = EmailPayloadShape {
+        sandbox: false,
+        from: aha_send::Entity {
+            email: format!("{from_email_username_part}@{sender_qualified_domain_name}"),
+            name: from_name,
+        },
+        recipients: vec![Entity {
+            email: to_email_address,
+            name: to_name,
+        }],
+        subject: message_title,
+        text_content: message_content.clone(),
+        html_content: message_content,
+    };
+    let json = serde_json::to_string(&aha_payload)?;
+    tracing::debug!("Payload as json: {json}");
+    aha_send.send_email(aha_payload).await
 }

@@ -457,6 +457,7 @@ dependencies = [
  "resend-rs",
  "secrecy",
  "serde",
+ "serde_json",
  "server",
  "server_config",
  "strum",

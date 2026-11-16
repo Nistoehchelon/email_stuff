@@ -57,7 +57,7 @@ pub struct TypicalEmail {
 
 use rand::seq::IteratorRandom;
 
-#[tracing::instrument(skip(email_data))]
+#[tracing::instrument(skip(email_data, sender_config))]
 pub async fn send_email(
     sender_config: EmailSenderConfig,
     email_data: TypicalEmail,
@@ -89,12 +89,12 @@ fn randomly_select_service(
     let mut rng = rand::rng();
     match selected_services.iter().choose(&mut rng) {
         None => {
-            return Err(EmailSendingError::CouldNotRandomlyPickSendingService);
+            Err(EmailSendingError::CouldNotRandomlyPickSendingService)
         }
         Some(c) => {
-            return Ok(c.clone());
+            Ok(c.clone())
         }
-    };
+    }
 }
 #[derive(Debug, Clone)]
 pub enum EmailSendingError {
