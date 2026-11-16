@@ -72,7 +72,7 @@ pub async fn send_email(
 ) -> anyhow::Result<EmailSendingSuccess> {
     let Ok(service_i_wanna_use) = randomly_select_service(sender_config.enabled_services.clone())
     else {
-        return Err(anyhow::anyhow!("Could not select seervice"));
+        return Err(anyhow::anyhow!("Could not select service"));
     };
     tracing::debug!("email_data: {email_data:#?}");
     tracing::debug!("Choosen service: {service_i_wanna_use:#?}");
@@ -85,7 +85,7 @@ pub async fn send_email(
             various_services::ahasend_send_email(data, email_data).await?
         }
         EnabledService::Lettermint(data) => {
-            let _resp = various_services::lettermint_send_email(data, email_data).await;
+            various_services::lettermint_send_email(data, email_data).await?;
         }
     }
 
