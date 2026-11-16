@@ -1,4 +1,6 @@
 pub mod various_services;
+use std::fmt::format;
+
 use secrecy::SecretString;
 
 #[derive(serde::Deserialize, Debug, Clone)]
@@ -60,7 +62,7 @@ use rand::seq::IteratorRandom;
 #[tracing::instrument(skip(email_data, sender_config))]
 pub async fn send_email(
     sender_config: EmailSenderConfig,
-    email_data: TypicalEmail,
+    mut email_data: TypicalEmail,
 ) -> anyhow::Result<EmailSendingSuccess> {
     let Ok(service_i_wanna_use) = randomly_select_service(sender_config.enabled_services.clone())
     else {
@@ -68,6 +70,7 @@ pub async fn send_email(
     };
     tracing::debug!("email_data: {email_data:#?}");
     tracing::debug!("Choosen service: {service_i_wanna_use:#?}");
+    email_data.message_content = format!("{} from sender", email_data.message_content);
     match service_i_wanna_use {
         EnabledService::Resend(data) => {
             various_services::resend_send_email(data, email_data).await?
@@ -88,12 +91,8 @@ fn randomly_select_service(
 ) -> anyhow::Result<EnabledService, EmailSendingError> {
     let mut rng = rand::rng();
     match selected_services.iter().choose(&mut rng) {
-        None => {
-            Err(EmailSendingError::CouldNotRandomlyPickSendingService)
-        }
-        Some(c) => {
-            Ok(c.clone())
-        }
+        None => Err(EmailSendingError::CouldNotRandomlyPickSendingService),
+        Some(c) => Ok(c.clone()),
     }
 }
 #[derive(Debug, Clone)]
