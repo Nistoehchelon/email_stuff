@@ -55,6 +55,7 @@ pub enum EnabledService {
     Lettermint(LettermintServiceData),
 }
 #[derive(serde::Deserialize, Debug, Clone, derive_more::Display)]
+#[serde(transparent)]
 pub struct SenderQualifiedDomain(pub String); // example: supersend.mysite.com
 
 #[derive(Debug, Clone)]
