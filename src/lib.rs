@@ -15,15 +15,19 @@ pub struct EmailSenderConfig {
 }
 
 #[derive(serde::Deserialize, derive_more::Debug, derive_more::Deref, derive_more::From, Clone)]
+#[serde(transparent)]
 #[from(forward)]
 pub struct ResendAPIKey(pub SecretString);
 #[derive(serde::Deserialize, derive_more::Debug, derive_more::Deref, derive_more::From, Clone)]
+#[serde(transparent)]
 #[from(forward)]
 pub struct AhaSendAPIKey(pub SecretString);
 #[derive(serde::Deserialize, derive_more::Debug, derive_more::Deref, derive_more::From, Clone)]
+#[serde(transparent)]
 #[from(forward)]
 pub struct AhaSendAccountId(pub SecretString);
 #[derive(serde::Deserialize, derive_more::Debug, derive_more::Deref, derive_more::From, Clone)]
+#[serde(transparent)]
 #[from(forward)]
 pub struct LetterMintProjectToken(pub SecretString);
 
